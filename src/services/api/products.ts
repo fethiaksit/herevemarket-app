@@ -29,8 +29,13 @@ type ProductsResponse =
   | { data?: { data?: RawProduct[]; pagination?: unknown } };
 
 export async function getProducts() {
-  const response = await apiFetch<ProductsResponse>("/admin/products");
-
+  console.log("[getProducts] public request, no token");
+  const response = await apiFetch<ProductsResponse>("/products", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
   const rawData = Array.isArray(response?.data)
     ? response?.data
     : Array.isArray((response as { data?: { data?: RawProduct[] } })?.data?.data)

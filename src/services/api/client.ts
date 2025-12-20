@@ -1,12 +1,11 @@
 import { apiConfig } from "../../config/env";
-import { ADMIN_JWT } from "../../config/adminToken";
 
 type ApiRequestOptions = RequestInit;
 
 export async function apiFetch<T>(path: string, options: ApiRequestOptions = {}) {
   const headers = new Headers(options.headers ?? {});
 
-  headers.set("Authorization", `Bearer ${ADMIN_JWT}`);
+
 
   if (!headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");

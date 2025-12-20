@@ -1,6 +1,5 @@
 import { apiFetch } from "../api/client";
 import { tokenStorage } from "./tokenStorage";
-import { ADMIN_JWT } from "../../config/adminToken";
 
 type LoginRequest = {
   email: string;
@@ -18,7 +17,6 @@ export async function login(credentials: LoginRequest) {
     method: "POST",
 
     headers: {
-      Authorization: `Bearer ${ADMIN_JWT}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(credentials),

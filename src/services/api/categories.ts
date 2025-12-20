@@ -8,7 +8,12 @@ export type CategoryDto = {
 };
 
 export async function getCategories() {
-  const response = await apiFetch<{ data: CategoryDto[] }>("/admin/categories");
-
+  console.log("[getCategories] public request, no token");
+  const response = await apiFetch<{ data: CategoryDto[] }>("/categories", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
   return response.data;
 }
