@@ -25,10 +25,12 @@ export type ProductDto = {
 };
 
 type ProductsResponse =
+  | RawProduct[]
   | { data?: RawProduct[]; pagination?: unknown }
   | { data?: { data?: RawProduct[]; pagination?: unknown } };
 
 export async function getProducts() {
+  console.log("[getProducts] request started");
   console.log("[getProducts] public request, no token");
   const response = await apiFetch<ProductsResponse>("/products", {
     method: "GET",
@@ -36,8 +38,12 @@ export async function getProducts() {
       "Content-Type": "application/json",
     },
   });
-  const rawData = Array.isArray(response?.data)
-    ? response?.data
+  console.log("[getProducts] response:", response);
+
+  const rawData = Array.isArray(response)
+    ? response
+    : Array.isArray((response as { data?: RawProduct[] })?.data)
+    ? ((response as { data?: RawProduct[] }).data ?? [])
     : Array.isArray((response as { data?: { data?: RawProduct[] } })?.data?.data)
     ? ((response as { data?: { data?: RawProduct[] } }).data?.data ?? [])
     : [];

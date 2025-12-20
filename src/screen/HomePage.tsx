@@ -770,6 +770,7 @@ export default function HomePage() {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [productsMessage, setProductsMessage] = useState<string | null>(null);
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(
@@ -811,15 +812,20 @@ export default function HomePage() {
     const fetchProducts = async () => {
       try {
         setError(null);
+        setProductsMessage(null);
+        setLoading(true);
         const incomingProducts = await getProducts();
-        if (incomingProducts.length === 0) {
-          setProducts(fallbackProducts);
+        if (!incomingProducts || incomingProducts.length === 0) {
+          setProducts([]);
+          setProductsMessage("Ürün bulunamadı");
         } else {
           setProducts(incomingProducts);
         }
       } catch (err) {
+        console.error("[HomePage] failed to fetch products", err);
         setError("Ürünler yüklenirken bir hata oluştu. Yerel liste gösteriliyor.");
         setProducts(fallbackProducts);
+        setProductsMessage(null);
       } finally {
         setLoading(false);
       }
@@ -832,6 +838,7 @@ export default function HomePage() {
     const fetchCategories = async () => {
       try {
         setCategoriesError(null);
+        setCategoriesLoading(true);
         const incomingCategories = await getCategories();
         const activeCategories = (incomingCategories ?? []).filter(
           (category) => category.isActive
@@ -841,6 +848,7 @@ export default function HomePage() {
         );
         setCategories(nextCategories);
       } catch (err) {
+        console.error("[HomePage] failed to fetch categories", err);
         setCategoriesError(
           "Kategoriler yüklenirken bir hata oluştu. Yerel liste gösteriliyor."
         );
@@ -1268,11 +1276,15 @@ export default function HomePage() {
 
           {error && !loading && <Text style={styles.cartEmptyText}>{error}</Text>}
 
-          {!loading && !error && selectedCategoryProducts.length === 0 && (
+          {!loading && !error && productsMessage && (
+            <Text style={styles.cartEmptyText}>{productsMessage}</Text>
+          )}
+
+          {!loading && !error && !productsMessage && selectedCategoryProducts.length === 0 && (
             <Text style={styles.cartEmptyText}>Bu kategoride ürün bulunamadı.</Text>
           )}
 
-          {!loading && !error && selectedCategoryProducts.length > 0 &&
+          {!loading && !error && !productsMessage && selectedCategoryProducts.length > 0 &&
             selectedCategoryProducts.map(renderProductCard)}
         </ScrollView>
 
@@ -1388,11 +1400,15 @@ export default function HomePage() {
 
           {error && !loading && <Text style={styles.cartEmptyText}>{error}</Text>}
 
-          {!loading && !error && campaignProducts.length === 0 && (
+          {!loading && !error && productsMessage && (
+            <Text style={styles.cartEmptyText}>{productsMessage}</Text>
+          )}
+
+          {!loading && !error && !productsMessage && campaignProducts.length === 0 && (
             <Text style={styles.cartEmptyText}>Kampanyalı ürün bulunamadı.</Text>
           )}
 
-          {!loading && !error && campaignProducts.length > 0 &&
+          {!loading && !error && !productsMessage && campaignProducts.length > 0 &&
             campaignProducts.map(renderProductCard)}
         </View>
       </ScrollView>
