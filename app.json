@@ -13,11 +13,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "UIViewControllerBasedStatusBarAppearance": true
+  "infoPlist": {
+    "NSAppTransportSecurity": {
+      "NSAllowsArbitraryLoads": true,
+      "NSExceptionDomains": {
+        "52.57.82.30": { "NSTemporaryExceptionAllowsInsecureHTTPLoads": true }
       }
-    },
+    }
+  }
+},
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -32,7 +36,7 @@
     "extra": {
       "stage": "development",
       "apiBaseUrls": {
-        "development": "http://192.168.1.10:8080",
+        "development": "http://52.57.82.30/",
         "staging": "https://staging.api.herevemarket.com",
         "production": "https://api.herevemarket.com"
       }

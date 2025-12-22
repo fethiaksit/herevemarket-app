@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 
+
 type RawProduct = {
   id?: string;
   name?: string;
@@ -12,7 +13,14 @@ type RawProduct = {
   _id?: string;
   clientId?: string | number;
 };
-
+export type ProductInput = {
+  name: string;
+  price: number;
+  image?: string;
+  category?: string[];
+  isCampaign?: boolean;
+  isDiscounted?: boolean;
+};
 export type ProductDto = {
   id: string;
   name: string;
@@ -29,6 +37,17 @@ type ProductsResponse =
   | { data?: RawProduct[]; pagination?: unknown }
   | { data?: { data?: RawProduct[]; pagination?: unknown } };
 
+
+  export async function fetchProducts() {
+    return apiFetch("/products"); // resolves to http://52.57.82.30/products when API_BASE_URL is set
+  }
+
+  export async function createProduct(payload: ProductInput) {
+    return apiFetch("/products", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
 export async function getProducts() {
   console.log("[getProducts] request started");
   console.log("[getProducts] public request, no token");

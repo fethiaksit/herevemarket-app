@@ -26,7 +26,7 @@ mongoose
 app.use("/api/v1/categories", categoriesRouter);
 app.use("/api/v1/products", productsRouter);
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 0.0.0.0;
 app.listen(port, () => {
   console.log(`API listening on port ${port}`);
 });

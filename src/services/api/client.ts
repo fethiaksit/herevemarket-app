@@ -1,30 +1,25 @@
-import { apiConfig } from "../../config/env";
+import { API_BASE_URL } from "../../config/env";
 
 type ApiRequestOptions = RequestInit;
 
-export async function apiFetch<T>(path: string, options: ApiRequestOptions = {}) {
+export async function apiFetch<T>(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers ?? {});
+  if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
 
-  if (!headers.has("Content-Type") && options.body) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const baseUrl = apiConfig.apiBaseUrl.replace(/\/$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = path.startsWith("http") ? path : `${baseUrl}${normalizedPath}`;
+  const url = path.startsWith("http") ? path : `${API_BASE_URL}${normalizedPath}`;
 
-  console.log("[API URL]", apiConfig.apiBaseUrl);
+
+  console.log("[API URL]", API_BASE_URL);
   console.log("[apiFetch] request started", {
     url,
     method: options.method ?? "GET",
   });
 
-  let response: Response;
+  const response = await fetch(url, { ...options, headers });
   try {
-    response = await fetch(url, {
-      ...options,
-      headers,
-    });
+   console.log("const response = await fetch(url, { ...options, headers });");
+   
   } catch (err) {
     console.error("[apiFetch] network error", err);
     throw err;
