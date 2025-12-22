@@ -15,4 +15,4 @@ const extra = (Constants.expoConfig?.extra ?? {}) as {
 
 const stage: Stage = extra.stage ?? "development";
 const baseUrls = { ...defaultBaseUrls, ...(extra.apiBaseUrls ?? {}) };
-export const API_BASE_URL = "http://52.57.82.30/api/v1";
+export const API_BASE_URL = "http://52.57.82.30";

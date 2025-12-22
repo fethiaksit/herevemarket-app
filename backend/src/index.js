@@ -23,10 +23,10 @@ mongoose
     console.error("Mongo connection failed", err);
   });
 
-app.use("/api/v1/categories", categoriesRouter);
-app.use("/api/v1/products", productsRouter);
+  app.use("/products", productsRouter);
+  app.use("/categories", categoriesRouter);
 
-const port = process.env.PORT || 0.0.0.0;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`API listening on port ${port}`);
 });

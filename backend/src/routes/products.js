@@ -17,19 +17,10 @@ const normalizeProduct = (item) => {
   };
 };
 
-router.get("/", async (_req, res, next) => {
-  try {
-    const products = await Product.find({ isActive: true })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const normalized = products.map((item) => normalizeProduct(item));
-
-    res.json({ data: normalized });
-  } catch (error) {
-    next(error);
-  }
+router.get("/", (req, res) => {
+  res.json({ message: "products ok" });
 });
+
 
 router.post("/", async (req, res, next) => {
   try {
