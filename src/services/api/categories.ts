@@ -13,15 +13,14 @@ type CategoriesResponse =
   | { data?: { data?: CategoryDto[] } };
 
 export async function getCategories() {
-  console.log("[getCategories] request started");
-  console.log("[getCategories] public request, no token");
+ 
   const response = await apiFetch<CategoriesResponse>("/categories", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
   });
-  console.log("[getCategories] response:", response);
+
 
   if (Array.isArray(response)) {
     return response;

@@ -32,7 +32,7 @@
     "extra": {
       "stage": "development",
       "apiBaseUrls": {
-        "development": "http://192.168.1.14:8080",
+        "development": "http://192.168.1.10:8080",
         "staging": "https://staging.api.herevemarket.com",
         "production": "https://api.herevemarket.com"
       }

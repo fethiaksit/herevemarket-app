@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/herevemarket";
+const mongoUri = process.env.MONGODB_URI || "mongodb+srv://fethi35aksit_db_user:_4iG3K@7kt5@dKM@herevemarket.wtveln1.mongodb.net/?appName=herevemarket";
 
 mongoose
   .connect(mongoUri)

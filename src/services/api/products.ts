@@ -38,7 +38,7 @@ export async function getProducts() {
       "Content-Type": "application/json",
     },
   });
-  console.log("[getProducts] response:", response);
+
 
   const rawData = Array.isArray(response)
     ? response
