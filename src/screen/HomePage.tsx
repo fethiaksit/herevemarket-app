@@ -440,7 +440,7 @@ function PaymentScreen({
       <TouchableOpacity style={styles.secondaryButton} onPress={onAddCard}>
         <Text style={styles.secondaryButtonText}>+ Yeni Kart Ekle</Text>
       </TouchableOpacity>
-
+  
       <TouchableOpacity style={styles.primaryButton} onPress={onContinue}>
         <Text style={styles.primaryButtonText}>Ödemeyi Onayla</Text>
       </TouchableOpacity>
@@ -531,6 +531,7 @@ function AddCardScreen({
   onCancel,
 }: {
   onSave: (card: { holder: string; number: string; expiry: string; cvv: string }) => void;
+  
   onCancel: () => void;
 }) {
   const [holder, setHolder] = useState("");
@@ -644,7 +645,25 @@ function AddCardScreen({
       <TouchableOpacity style={styles.ghostButton} onPress={onCancel}>
         <Text style={styles.ghostButtonText}>İptal</Text>
       </TouchableOpacity>
+      <View style={styles.legalLogosRow}>
+        <Image
+          source={require("../../assets/visa.png")}
+          style={styles.legalLogo}
+          resizeMode="contain"
+        />
+        <Image
+          source={require("../../assets/mastercard.png")}
+          style={styles.legalLogo}
+          resizeMode="contain"
+        />
+        <Image
+          source={require("../../assets/iyzico_ile_ode_colored.png")}
+          style={[styles.legalLogo, styles.legalLogoWide]}
+          resizeMode="contain"
+        />
+      </View>
     </View>
+    
   );
 }
 
@@ -1354,6 +1373,23 @@ export default function HomePage() {
         onCancel={() => setActiveScreen("payment")}
       />
     );
+    <View style={styles.legalLogosRow}>
+    <Image
+      source={require("../../assets/visa.png")}
+      style={styles.legalLogo}
+      resizeMode="contain"
+    />
+    <Image
+      source={require("../../assets/mastercard.png")}
+      style={styles.legalLogo}
+      resizeMode="contain"
+    />
+    <Image
+      source={require("../../assets/iyzico_ile_ode_colored.png")}
+      style={[styles.legalLogo, styles.legalLogoWide]}
+      resizeMode="contain"
+    />
+  </View>
   }
 
   if (activeScreen === "summary") {
