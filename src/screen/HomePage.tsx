@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ImageSourcePropType,
   TextInput,
   Alert,
+  Linking,
 } from "react-native";
 import { styles } from "../styles/home.styles";
 import { useCart } from "../hooks/useCart";
@@ -59,6 +60,13 @@ type CartLineItem = { product: Product; quantity: number };
 const CART_FOOTER_HEIGHT = 200;
 const CAMPAIGN_CATEGORY_ID = "campaign";
 const CAMPAIGN_CATEGORY_NAME = "Kampanyalı Ürünler";
+const LEGAL_URLS = {
+  about: "https://herevemarket.com/hakkimizda",
+  ssl: "https://herevemarket.com/ssl-sertifikasi",
+  returns: "https://herevemarket.com/teslimat-iade",
+  privacy: "https://herevemarket.com/gizlilik",
+  distance: "https://herevemarket.com/mesafeli-satis",
+} as const;
 
 const markalar: Brand[] = [
   { name: "Eti", image: require("../../assets/eti.png") },
@@ -674,6 +682,7 @@ function SummaryScreen({
   payment,
   onBack,
   onSubmit,
+  onPressLegal,
 }: {
   cartDetails: CartLineItem[];
   total: number;
@@ -681,12 +690,10 @@ function SummaryScreen({
   payment: PaymentMethod | undefined;
   onBack: () => void;
   onSubmit: () => void;
+  onPressLegal: (key: keyof typeof LEGAL_URLS) => void;
 }) {
   const isSubmitDisabled =
     cartDetails.length === 0 || !address || !payment || total <= 0;
-  const handleLegalPress = (key: string) => {
-    console.log(`[SummaryScreen] legal link pressed: ${key}`);
-  };
 
   return (
     <View style={styles.checkoutScreenContainer}>
@@ -763,7 +770,7 @@ function SummaryScreen({
       </TouchableOpacity>
 
       {/* --- NEW: Legal & Payment Info Section --- */}
-      <LegalPaymentInfoSection onPressLegal={handleLegalPress} />
+      <LegalPaymentInfoSection onPressLegal={onPressLegal} />
     </View>
   );
 }
@@ -772,7 +779,7 @@ function SummaryScreen({
 function LegalPaymentInfoSection({
   onPressLegal,
 }: {
-  onPressLegal: (key: string) => void;
+  onPressLegal: (key: keyof typeof LEGAL_URLS) => void;
 }) {
   return (
     <View style={styles.legalSection}>
@@ -923,6 +930,28 @@ export default function HomePage() {
     initialPaymentMethods[0]?.id ?? ""
   );
   const [orderId, setOrderId] = useState<string>("");
+  const handleLegalPress = useCallback(
+    async (key: keyof typeof LEGAL_URLS) => {
+      const url = LEGAL_URLS[key];
+      if (!url) {
+        return;
+      }
+
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (!supported) {
+          Alert.alert("Bağlantı açılamadı", "Bağlantı desteklenmiyor.");
+          return;
+        }
+
+        await Linking.openURL(url);
+      } catch (error) {
+        console.error("[HomePage] failed to open legal link", error);
+        Alert.alert("Bağlantı açılamadı", "Lütfen daha sonra tekrar deneyin.");
+      }
+    },
+    []
+  );
 
   const cartDetails = useMemo<CartLineItem[]>(
     () =>
@@ -1373,23 +1402,6 @@ export default function HomePage() {
         onCancel={() => setActiveScreen("payment")}
       />
     );
-    <View style={styles.legalLogosRow}>
-    <Image
-      source={require("../../assets/visa.png")}
-      style={styles.legalLogo}
-      resizeMode="contain"
-    />
-    <Image
-      source={require("../../assets/mastercard.png")}
-      style={styles.legalLogo}
-      resizeMode="contain"
-    />
-    <Image
-      source={require("../../assets/iyzico_ile_ode_colored.png")}
-      style={[styles.legalLogo, styles.legalLogoWide]}
-      resizeMode="contain"
-    />
-  </View>
   }
 
   if (activeScreen === "summary") {
@@ -1401,6 +1413,7 @@ export default function HomePage() {
         payment={selectedPayment}
         onBack={handleReturnToPayment}
         onSubmit={handleSubmitOrder}
+        onPressLegal={handleLegalPress}
       />
     );
   }
