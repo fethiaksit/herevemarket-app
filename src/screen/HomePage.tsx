@@ -22,6 +22,27 @@ type Brand = { name: string; image: ImageSourcePropType };
 type Product = ProductDto & { categoryIds?: string[] };
 type Address = { id: string; title: string; detail: string; note?: string };
 type PaymentMethod = { id: string; label: string; description: string };
+type OrderItemPayload = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type OrderPayload = {
+  items: OrderItemPayload[];
+  totalPrice: number;
+  customer: {
+    title: string;
+    detail: string;
+    note?: string;
+  };
+  paymentMethod: {
+    id: string;
+    label?: string;
+  };
+  createdAt: string;
+};
 type Screen =
   | "home"
   | "category"
@@ -43,7 +64,7 @@ const markalar: Brand[] = [
   { name: "Eti", image: require("../../assets/eti.png") },
   { name: "Ülker", image: require("../../assets/ulker.png") },
   { name: "Torku", image: require("../../assets/torku.png") },
-  { name: "Axe", image: require("../../assets/axe.png") },
+  { name: "Axe", image: require("../../assets/cola.png") },
   { name: "Clear", image: require("../../assets/axe.png") },
   { name: "Domestos", image: require("../../assets/Domestos.png") },
   { name: "Dove", image: require("../../assets/Dove.png") },
@@ -105,18 +126,7 @@ const ensureCampaignCategory = (list: CategoryDto[]): CategoryDto[] => {
 
 const initialAddresses: Address[] = [
 
-  {
-    id: "home",
-    title: "Ev",
-    detail: "Ataşehir, Örnek Mah. 123. Sok. No:4 Daire: 12",
-    note: "Site: Mavi Evler, Kapı: C Blok",
-  },
-  {
-    id: "office",
-    title: "Ofis",
-    detail: "Kadıköy, Rıhtım Cad. No: 45 Kat: 3",
-    note: "Çay ocağı karşısı",
-  },
+
 ];
 
 const initialPaymentMethods: PaymentMethod[] = [
@@ -126,11 +136,7 @@ const initialPaymentMethods: PaymentMethod[] = [
     label: "Kredi Kartı",
     description: "Visa - **** 4242",
   },
-  {
-    id: "cash",
-    label: "Kapıda Nakit",
-    description: "Teslimatta ödeme",
-  },
+
 ];
 
 function CartScreen({
@@ -163,7 +169,7 @@ function CartScreen({
 
           <View>
             <Text style={styles.cartTitle}>Sepetim</Text>
-            <Text style={styles.cartSubtitle}>Hızlı teslimat için hazır</Text>
+            <Text style={styles.cartSubtitle}>Teslimat için hazır</Text>
           </View>
         </View>
 
@@ -172,7 +178,7 @@ function CartScreen({
             <Text style={styles.cartBadgeText}>Hereve Market</Text>
           </View>
           <View style={styles.cartEtaPill}>
-            <Text style={styles.cartEtaText}>10-15 dk</Text>
+            <Text style={styles.cartEtaText}>Hemen Kargo</Text>
           </View>
         </View>
 
@@ -758,6 +764,48 @@ const maskCardNumber = (number: string) => {
   return "**** **** **** " + last4;
 };
 
+const buildOrderPayload = (
+  cartDetails: CartLineItem[],
+  totalPrice: number,
+  address?: Address,
+  payment?: PaymentMethod
+): OrderPayload => {
+  if (!cartDetails.length) {
+    throw new Error("Cart is empty");
+  }
+
+  if (!address) {
+    throw new Error("Delivery address is missing");
+  }
+
+  if (!payment) {
+    throw new Error("Payment method is missing");
+  }
+
+  const items: OrderItemPayload[] = cartDetails.map(({ product, quantity }) => ({
+    productId: product.id,
+    name: product.name,
+    price: product.price,
+    quantity,
+  }));
+
+  return {
+    items,
+    totalPrice,
+    customer: {
+      title: address.title,
+      detail: address.detail,
+      note: address.note,
+    },
+    paymentMethod: {
+      id: payment.id,
+      label: payment.label,
+    },
+    createdAt: new Date().toISOString(),
+  };
+};
+
+
 export default function HomePage() {
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
@@ -1118,7 +1166,7 @@ export default function HomePage() {
     });
   };
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (cartDetails.length === 0) {
       Alert.alert("Sepet boş", "Sipariş oluşturmak için ürün ekleyin.");
       return;
@@ -1131,12 +1179,46 @@ export default function HomePage() {
       );
       return;
     }
-
+    try {
+      const payload = buildOrderPayload(
+        cartDetails,
+        cartTotal,
+        selectedAddress,
+        selectedPayment
+      );
+    
+      console.log("[OrderPayload] prepared order payload", payload);
+    
+      const response = await fetch("http://52.57.82.30/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+    
+      if (!response.ok) {
+        throw new Error("Order request failed");
+      }
+    
+      const result = await response.json();
+      setOrderId(result.orderId); // backend’den gelmeli
+    
+      setActiveScreen("success");
+      clearCart();
+    } catch (err) {
+      console.error("[OrderSubmit] failed", err);
+      Alert.alert(
+        "Sipariş başarısız",
+        "Sipariş gönderilirken bir hata oluştu."
+      );
+    }
     const newOrderId = (Math.floor(Math.random() * 900000) + 100000).toString();
     setOrderId(newOrderId);
     setActiveScreen("success");
     clearCart();
   };
+
 
   const handleReturnHome = () => {
     setActiveScreen("home");
