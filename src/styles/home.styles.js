@@ -835,6 +835,46 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  legalSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  legalLinksRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 16,
+    marginBottom: 12,
+  },
+  legalLinksColumn: {
+    flex: 1,
+    gap: 8,
+  },
+  legalLink: {
+    paddingVertical: 2,
+  },
+  legalLinkText: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  legalCaption: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 8,
+  },
+  legalLogosRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  legalLogo: {
+    height: 24,
+    width: 64,
+  },
+  legalLogoWide: {
+    width: 86,
+  },
   successContainer: {
     flex: 1,
     justifyContent: "center",

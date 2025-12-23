@@ -89,5 +89,14 @@ declare module "../styles/home.styles" {
     cartBackButtonAlt: ViewStyle;
     cartBackTextAlt: TextStyle;
     cartBadgeText: TextStyle;
+    legalSection: ViewStyle;
+    legalLinksRow: ViewStyle;
+    legalLinksColumn: ViewStyle;
+    legalLink: ViewStyle;
+    legalLinkText: TextStyle;
+    legalCaption: TextStyle;
+    legalLogosRow: ViewStyle;
+    legalLogo: ImageStyle;
+    legalLogoWide: ImageStyle;
   };
 }

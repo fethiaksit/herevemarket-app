@@ -665,6 +665,9 @@ function SummaryScreen({
 }) {
   const isSubmitDisabled =
     cartDetails.length === 0 || !address || !payment || total <= 0;
+  const handleLegalPress = (key: string) => {
+    console.log(`[SummaryScreen] legal link pressed: ${key}`);
+  };
 
   return (
     <View style={styles.checkoutScreenContainer}>
@@ -739,6 +742,76 @@ function SummaryScreen({
           Siparişi Gönder
         </Text>
       </TouchableOpacity>
+
+      {/* --- NEW: Legal & Payment Info Section --- */}
+      <LegalPaymentInfoSection onPressLegal={handleLegalPress} />
+    </View>
+  );
+}
+
+// --- NEW: Legal & Payment Info Section ---
+function LegalPaymentInfoSection({
+  onPressLegal,
+}: {
+  onPressLegal: (key: string) => void;
+}) {
+  return (
+    <View style={styles.legalSection}>
+      <View style={styles.legalLinksRow}>
+        <View style={styles.legalLinksColumn}>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => onPressLegal("about")}
+          >
+            <Text style={styles.legalLinkText}>Hakkımızda</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => onPressLegal("ssl")}
+          >
+            <Text style={styles.legalLinkText}>SSL Sertifikası</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => onPressLegal("returns")}
+          >
+            <Text style={styles.legalLinkText}>Teslimat ve İade Şartları</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.legalLinksColumn}>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => onPressLegal("privacy")}
+          >
+            <Text style={styles.legalLinkText}>Gizlilik Sözleşmesi</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => onPressLegal("distance")}
+          >
+            <Text style={styles.legalLinkText}>Mesafeli Satış Sözleşmesi</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Text style={styles.legalCaption}>Güvenli ödeme altyapısı</Text>
+      <View style={styles.legalLogosRow}>
+        <Image
+          source={require("../../assets/visa.png")}
+          style={styles.legalLogo}
+          resizeMode="contain"
+        />
+        <Image
+          source={require("../../assets/mastercard.png")}
+          style={styles.legalLogo}
+          resizeMode="contain"
+        />
+        <Image
+          source={require("../../assets/iyzico_ile_ode_colored.png")}
+          style={[styles.legalLogo, styles.legalLogoWide]}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 }
