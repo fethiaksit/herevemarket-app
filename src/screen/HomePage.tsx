@@ -1281,7 +1281,7 @@ export default function HomePage() {
     
       console.log("[OrderPayload] prepared order payload", payload);
     
-      const response = await fetch("http://52.57.82.30/orders", {
+      const response = await fetch("https://api.herevemarket.com/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

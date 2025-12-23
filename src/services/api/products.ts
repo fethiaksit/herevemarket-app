@@ -39,7 +39,7 @@ type ProductsResponse =
 
 
   export async function fetchProducts() {
-    return apiFetch("/products"); // resolves to http://52.57.82.30/products when API_BASE_URL is set
+    return apiFetch("/products"); // resolves to https://api.herevemarket.com/products when API_BASE_URL is set
   }
 
   export async function createProduct(payload: ProductInput) {
