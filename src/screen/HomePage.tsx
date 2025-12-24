@@ -61,7 +61,7 @@ const CART_FOOTER_HEIGHT = 200;
 const CAMPAIGN_CATEGORY_ID = "campaign";
 const CAMPAIGN_CATEGORY_NAME = "Kampanyalı Ürünler";
 const LEGAL_URLS = {
-  about: "https://herevemarket.com/hakkimizda",
+  about: "https://herevemarket.com/hakkimizrda",
   ssl: "https://herevemarket.com/ssl-sertifikasi",
   returns: "https://herevemarket.com/teslimat-iade",
   privacy: "https://herevemarket.com/gizlilik",
@@ -819,8 +819,6 @@ function LegalPaymentInfoSection({
           </TouchableOpacity>
         </View>
       </View>
-
-      <Text style={styles.legalCaption}>Güvenli ödeme altyapısı</Text>
       <View style={styles.legalLogosRow}>
         <Image
           source={require("../../assets/visa.png")}
@@ -838,7 +836,10 @@ function LegalPaymentInfoSection({
           resizeMode="contain"
         />
       </View>
+      <Text style={styles.legalCaption}>Güvenli ödeme altyapısı</Text>
+ 
     </View>
+    
   );
 }
 
