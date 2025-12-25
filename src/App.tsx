@@ -25,7 +25,7 @@ export default function App() {
   const [isAddressOpen, setIsAddressOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(HOME_CATEGORY_ID);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<ScreenKey>(HOME_SCREEN);
+  const [activeScreen, setActiveScreen] = useState<ScreenKey>(HOME_SCREEN);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const listRef = useRef<FlatList<Product>>(null);
   const hasUserScrolledRef = useRef(false);
@@ -68,15 +68,11 @@ export default function App() {
 
   const handleProductPress = useCallback((product: Product) => {
     setSelectedProduct(product);
-    setCurrentScreen(DETAIL_SCREEN);
+    setActiveScreen(DETAIL_SCREEN);
   }, []);
 
   const handleBackToList = useCallback(() => {
-    setCurrentScreen(HOME_SCREEN);
-  }, []);
-
-  const handleSelectDetailProduct = useCallback((product: Product) => {
-    setSelectedProduct(product);
+    setActiveScreen(HOME_SCREEN);
   }, []);
 
   const categoryRotation = useMemo(() => categories.map((c) => c.id), []);
@@ -132,7 +128,7 @@ export default function App() {
     hasUserScrolledRef.current = true;
   }, []);
 
-  const isDetailScreen = currentScreen === DETAIL_SCREEN && selectedProduct !== null;
+  const isDetailScreen = activeScreen === DETAIL_SCREEN && selectedProduct !== null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -142,7 +138,7 @@ export default function App() {
         onAddressPress={() => setIsAddressOpen(true)}
         onHomePress={() => {
           setSelectedCategoryId(HOME_CATEGORY_ID);
-          setCurrentScreen(HOME_SCREEN);
+          setActiveScreen(HOME_SCREEN);
         }}
       />
 
@@ -150,10 +146,7 @@ export default function App() {
         {isDetailScreen && selectedProduct ? (
           <ProductDetailScreen
             product={selectedProduct}
-            products={products}
             onBack={handleBackToList}
-            onAddToCart={handleAddToCart}
-            onSelectProduct={handleSelectDetailProduct}
           />
         ) : (
           <>

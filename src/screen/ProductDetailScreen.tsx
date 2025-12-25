@@ -1,72 +1,20 @@
-import React, { useCallback, useMemo } from "react";
-import {
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React from "react";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Product } from "../types";
-import { ProductCard } from "../components/ProductCard";
 
 type Props = {
   product: Product;
-  products: Product[];
   onBack: () => void;
-  onAddToCart: (productId: string) => void;
-  onSelectProduct: (product: Product) => void;
 };
 
-const getAlternativeProducts = (products: Product[], product: Product, limit = 6) => {
-  const primaryMatches = products.filter((item) => {
-    if (item.id === product.id) return false;
-    if (product.categoryId && item.categoryId === product.categoryId) return true;
-    if (product.brand && item.brand === product.brand) return true;
-    return false;
-  });
-
-  const fallbackMatches = products.filter(
-    (item) => item.id !== product.id && !primaryMatches.some((match) => match.id === item.id),
-  );
-
-  return [...primaryMatches, ...fallbackMatches].slice(0, limit);
-};
-
-export const ProductDetailScreen: React.FC<Props> = ({
-  product,
-  products,
-  onBack,
-  onAddToCart,
-  onSelectProduct,
-}) => {
+export const ProductDetailScreen: React.FC<Props> = ({ product, onBack }) => {
   const isOutOfStock = product.stock === 0;
-  const alternatives = useMemo(() => getAlternativeProducts(products, product), [products, product]);
-  const handleAddToCart = useCallback((productId: string) => onAddToCart(productId), [onAddToCart]);
-  const handleBackPress = useCallback(() => onBack(), [onBack]);
-  const handleNoop = useCallback(() => undefined, []);
-  const renderAlternativeItem = useCallback(
-    ({ item }: { item: Product }) => (
-      <ProductCard
-        product={item}
-        quantity={0}
-        onAdd={handleNoop}
-        onRemove={handleNoop}
-        onPress={() => onSelectProduct(item)}
-        showActions={false}
-        showImage
-        containerStyle={styles.altCard}
-      />
-    ),
-    [handleNoop, onSelectProduct],
-  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backText}>Geri</Text>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
       </View>
 
@@ -80,26 +28,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
         <Text style={[styles.stock, isOutOfStock ? styles.stockOut : styles.stockIn]}>
           {isOutOfStock ? "Tükendi" : "Stokta"}
         </Text>
-        {product.description ? <Text style={styles.description}>{product.description}</Text> : null}
       </View>
-
-      <TouchableOpacity
-        style={[styles.addButton, isOutOfStock && styles.addButtonDisabled]}
-        onPress={() => handleAddToCart(product.id)}
-        disabled={isOutOfStock}
-      >
-        <Text style={[styles.addButtonText, isOutOfStock && styles.addButtonTextDisabled]}>Sepete Ekle</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.sectionTitle}>Benzer Ürünler</Text>
-      <FlatList
-        data={alternatives}
-        keyExtractor={(item) => item.id}
-        renderItem={renderAlternativeItem}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.altList}
-      />
     </ScrollView>
   );
 };
@@ -167,41 +96,5 @@ const styles = StyleSheet.create({
   },
   stockOut: {
     color: "#dc2626",
-  },
-  description: {
-    marginTop: 12,
-    color: "#374151",
-    lineHeight: 20,
-  },
-  addButton: {
-    backgroundColor: "#082A5F",
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  addButtonDisabled: {
-    backgroundColor: "#e5e7eb",
-  },
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  addButtonTextDisabled: {
-    color: "#6b7280",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 12,
-  },
-  altList: {
-    paddingBottom: 12,
-  },
-  altCard: {
-    width: 170,
-    marginRight: 12,
-    flex: 0,
   },
 });
