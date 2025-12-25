@@ -8,6 +8,7 @@ type Props = {
   getQuantity: (id: string) => number;
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
+  onProductPress?: (product: Product) => void;
   listRef?: RefObject<FlatList<Product>>;
   onEndReached?: () => void;
   onScrollBegin?: () => void;
@@ -18,6 +19,7 @@ export const ProductList: React.FC<Props> = ({
   getQuantity,
   onAdd,
   onRemove,
+  onProductPress,
   listRef,
   onEndReached,
   onScrollBegin,
@@ -33,6 +35,7 @@ export const ProductList: React.FC<Props> = ({
           quantity={getQuantity(item.id)}
           onAdd={() => onAdd(item.id)}
           onRemove={() => onRemove(item.id)}
+          onPress={onProductPress ? () => onProductPress(item) : undefined}
         />
       )}
       numColumns={2}
