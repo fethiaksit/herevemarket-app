@@ -12,6 +12,7 @@ type RawProduct = {
   image?: string;
   imageUrl?: string;
   category?: string | string[];
+  description?: string;
   isCampaign?: boolean;
   isDiscounted?: boolean;
   _id?: string;
@@ -26,6 +27,7 @@ export type ProductInput = {
   inStock?: boolean;
   image?: string;
   category?: string[];
+  description?: string;
   isCampaign?: boolean;
   isDiscounted?: boolean;
 };
@@ -40,6 +42,7 @@ export type ProductDto = {
   image?: string;
   imageUrl?: string;
   category: string[];
+  description?: string;
   isCampaign?: boolean;
   isDiscounted?: boolean;
 };
@@ -95,6 +98,7 @@ export async function getProducts() {
         stock,
         inStock,
         image: item.image ?? item.imageUrl,
+        description: item.description,
         category: Array.isArray(item.category)
           ? item.category
           : item.category

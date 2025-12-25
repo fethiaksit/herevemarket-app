@@ -24,11 +24,11 @@ export interface Product {
 
 type Props = {
   product: Product;
-  quantity: number; // Sepetteki adet sayısı
+  quantity?: number; // Sepetteki adet sayısı
   onBack: () => void;
-  onIncrease: (id: string) => void;
-  onDecrease: (id: string) => void;
-  onGoToCart: () => void; // YENİ: Sepete git fonksiyonu
+  onIncrease?: (id: string) => void;
+  onDecrease?: (id: string) => void;
+  onGoToCart?: () => void; // YENİ: Sepete git fonksiyonu
 };
 
 // Tema renkleri
@@ -45,13 +45,17 @@ const THEME = {
 
 export const ProductDetailScreen: React.FC<Props> = ({ 
   product, 
-  quantity, 
+  quantity = 0, 
   onBack, 
-  onIncrease, 
-  onDecrease,
-  onGoToCart // Props'a eklendi
+  onIncrease = () => undefined, 
+  onDecrease = () => undefined,
+  onGoToCart = () => undefined // Props'a eklendi
 }) => {
-  const isOutOfStock = !product.inStock || (product.stock !== undefined && product.stock === 0);
+  const isOutOfStock = product.stock === 0;
+  const description =
+    product.description && product.description.trim().length > 0
+      ? product.description
+      : "Bu ürün için açıklama bulunmamaktadır.";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -84,9 +88,11 @@ export const ProductDetailScreen: React.FC<Props> = ({
             <Text style={styles.price}>
                 {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(product.price)}
             </Text>
-            <View style={[styles.stockBadge, isOutOfStock ? styles.bgRed : styles.bgGreen]}>
-                <Text style={styles.stockText}>{isOutOfStock ? "Tükendi" : "Stokta Var"}</Text>
-            </View>
+            {isOutOfStock ? (
+              <View style={[styles.stockBadge, styles.bgRed]}>
+                <Text style={[styles.stockText, styles.stockTextOutOfStock]}>Tükendi</Text>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.divider} />
@@ -97,7 +103,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
           
           <Text style={styles.sectionTitle}>Ürün Açıklaması</Text>
           <Text style={styles.description}>
-            {product.description || "Bu ürün için henüz detaylı açıklama girilmemiştir. Taze ve kaliteli ürünleri kapınıza getiriyoruz."}
+            {description}
           </Text>
         </View>
       </ScrollView>
@@ -125,7 +131,11 @@ export const ProductDetailScreen: React.FC<Props> = ({
                   <Text style={styles.counterBtnText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.counterValueText}>{quantity}</Text>
-                <TouchableOpacity style={styles.counterBtnSmall} onPress={() => onIncrease(product.id)}>
+                <TouchableOpacity
+                  style={[styles.counterBtnSmall, isOutOfStock && styles.counterBtnDisabled]}
+                  onPress={() => onIncrease(product.id)}
+                  disabled={isOutOfStock}
+                >
                   <Text style={styles.counterBtnText}>+</Text>
                 </TouchableOpacity>
             </View>
@@ -158,9 +168,9 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
   price: { fontSize: 24, fontWeight: "bold", color: THEME.primary },
   stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  bgGreen: { backgroundColor: "#D1FAE5" },
   bgRed: { backgroundColor: "#FEE2E2" },
-  stockText: { fontWeight: "700", fontSize: 12, color: "#065F46" },
+  stockText: { fontWeight: "700", fontSize: 12 },
+  stockTextOutOfStock: { color: THEME.danger },
   divider: { height: 1, backgroundColor: "#E5E7EB", marginBottom: 16 },
   meta: { fontSize: 14, color: "#6B7280", marginBottom: 8 },
   metaValue: { color: THEME.textDark, fontWeight: "600" },
@@ -181,6 +191,7 @@ const styles = StyleSheet.create({
   // Counter Kısmı
   counterWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4 },
   counterBtnSmall: { width: 44, height: 44, borderRadius: 10, backgroundColor: THEME.white, justifyContent: 'center', alignItems: 'center', shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  counterBtnDisabled: { backgroundColor: "#E5E7EB" },
   counterBtnText: { fontSize: 20, fontWeight: 'bold', color: THEME.primary },
   counterValueText: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark, marginHorizontal: 16 },
 
