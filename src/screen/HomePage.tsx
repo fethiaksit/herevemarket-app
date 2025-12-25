@@ -106,6 +106,10 @@ const fallbackProducts: Product[] = [
     id: "sample-su",
     name: "Doğal Kaynak Suyu 5L",
     price: 45.90,
+    brand: "Hayat",
+    barcode: "8690000000000",
+    stock: 12,
+    inStock: true,
     image: "https://cdn.example.com/ayran.png",
     imageUrl: "https://cdn.example.com/ayran.png",
     category: ["İçecek", "Temel Gıda"],
@@ -180,6 +184,7 @@ function CartScreen({
   onCheckout,
   onIncrease,
   onDecrease,
+  isOutOfStock,
 }: {
   cartDetails: CartLineItem[];
   total: number;
@@ -187,6 +192,7 @@ function CartScreen({
   onCheckout: () => void;
   onIncrease: (id: string) => void;
   onDecrease: (id: string) => void;
+  isOutOfStock: (product: Product) => boolean;
 }) {
   const isCheckoutDisabled = cartDetails.length === 0;
 
@@ -241,10 +247,21 @@ function CartScreen({
                     </TouchableOpacity>
                     <Text style={styles.qtyTextSmall}>{item.quantity}</Text>
                     <TouchableOpacity
-                      style={styles.qtyBtnSmall}
+                      style={[
+                        styles.qtyBtnSmall,
+                        isOutOfStock(item.product) && styles.qtyBtnSmallDisabled,
+                      ]}
                       onPress={() => onIncrease(item.product.id)}
+                      disabled={isOutOfStock(item.product)}
                     >
-                      <Text style={styles.qtyBtnTextSmall}>+</Text>
+                      <Text
+                        style={[
+                          styles.qtyBtnTextSmall,
+                          isOutOfStock(item.product) && styles.qtyBtnTextSmallDisabled,
+                        ]}
+                      >
+                        +
+                      </Text>
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.cartItemTotalPrice}>
@@ -644,7 +661,10 @@ export default function HomePage() {
     [categories, selectedCategoryId]
   );
 
-  const campaignProducts = useMemo(() => products.filter(p => p.isCampaign), [products]);
+  const campaignProducts = useMemo(
+    () => products.filter((product) => product.isCampaign && product.inStock && product.stock > 0),
+    [products]
+  );
 
   const selectedCategoryProducts = useMemo(() => {
     if (!selectedCategoryId) return [];
@@ -708,6 +728,23 @@ export default function HomePage() {
 
   const cartTotal = useMemo(() => cartDetails.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cartDetails]);
 
+  const isOutOfStock = useCallback(
+    (product: Product) => !product.inStock || product.stock === 0,
+    []
+  );
+
+  const handleIncrease = useCallback(
+    (productId: string) => {
+      const product = products.find((item) => item.id === productId);
+      if (product && isOutOfStock(product)) {
+        Alert.alert("Bu ürün stokta bulunmuyor");
+        return;
+      }
+      increase(productId);
+    },
+    [increase, isOutOfStock, products]
+  );
+
   // Floating Cart PanResponder
   const pan = useRef(new Animated.ValueXY({ x: 16, y: Dimensions.get("window").height - 120 })).current;
   const panResponder = useRef(
@@ -723,18 +760,27 @@ export default function HomePage() {
   // Render Helper
   const renderProductCard = (urun: Product) => {
     const qty = getQuantity(urun.id);
+    const outOfStock = isOutOfStock(urun);
     return (
-      <View key={urun.id} style={styles.productCard}>
+      <View key={urun.id} style={[styles.productCard, outOfStock && styles.productCardDisabled]}>
         <View style={styles.productImageContainer}>
           <Image source={urun.image ? { uri: urun.image } : placeholderImage} style={styles.productImage} />
         </View>
         <View style={styles.productInfoContainer}>
           <Text style={styles.productName} numberOfLines={2}>{urun.name}</Text>
+          {urun.brand ? <Text style={styles.productBrand}>{urun.brand}</Text> : null}
+          {outOfStock ? <Text style={styles.outOfStockBadge}>TÜKENDİ</Text> : null}
           <View style={styles.productBottomRow}>
             <Text style={styles.productPrice}>{formatPrice(urun.price)}</Text>
             {qty === 0 ? (
-              <TouchableOpacity style={styles.addButton} onPress={() => increase(urun.id)}>
-                <Text style={styles.addButtonText}>EKLE</Text>
+              <TouchableOpacity
+                style={[styles.addButton, outOfStock && styles.addButtonDisabled]}
+                onPress={() => handleIncrease(urun.id)}
+                disabled={outOfStock}
+              >
+                <Text style={[styles.addButtonText, outOfStock && styles.addButtonTextDisabled]}>
+                  {outOfStock ? "Stokta Yok" : "EKLE"}
+                </Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.counterContainer}>
@@ -742,8 +788,12 @@ export default function HomePage() {
                    <Text style={styles.counterBtnText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.counterValue}>{qty}</Text>
-                <TouchableOpacity onPress={() => increase(urun.id)} style={styles.counterBtn}>
-                   <Text style={styles.counterBtnText}>+</Text>
+                <TouchableOpacity
+                  onPress={() => handleIncrease(urun.id)}
+                  style={[styles.counterBtn, outOfStock && styles.counterBtnDisabled]}
+                  disabled={outOfStock}
+                >
+                   <Text style={[styles.counterBtnText, outOfStock && styles.counterBtnTextDisabled]}>+</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -754,7 +804,17 @@ export default function HomePage() {
   };
 
   // Navigasyon Fonksiyonları
-  const handleCheckout = () => { if(cartDetails.length) setActiveScreen("address"); else Alert.alert("Sepet Boş"); };
+  const handleCheckout = () => {
+    if (!cartDetails.length) {
+      Alert.alert("Sepet Boş");
+      return;
+    }
+    if (cartDetails.some((item) => isOutOfStock(item.product))) {
+      Alert.alert("Sepetinizde stokta olmayan ürünler var");
+      return;
+    }
+    setActiveScreen("address");
+  };
   const handleSaveAddress = (data: any) => {
       const newAddr = { ...data, id: Date.now().toString() };
       setAddresses([...addresses, newAddr]);
@@ -771,6 +831,10 @@ export default function HomePage() {
   const handleSubmitOrder = async () => {
     if (cartDetails.length === 0) {
       Alert.alert("Sepet boş", "Sipariş oluşturmak için ürün ekleyin.");
+      return;
+    }
+    if (cartDetails.some((item) => isOutOfStock(item.product))) {
+      Alert.alert("Sepetinizde stokta olmayan ürünler var");
       return;
     }
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
@@ -810,7 +874,18 @@ export default function HomePage() {
   };
 
   // --- RENDER SCREENS ---
-  if (activeScreen === "cart") return <CartScreen cartDetails={cartDetails} total={cartTotal} onBack={() => setActiveScreen("home")} onCheckout={handleCheckout} onIncrease={increase} onDecrease={decrease} />;
+  if (activeScreen === "cart")
+    return (
+      <CartScreen
+        cartDetails={cartDetails}
+        total={cartTotal}
+        onBack={() => setActiveScreen("home")}
+        onCheckout={handleCheckout}
+        onIncrease={handleIncrease}
+        onDecrease={decrease}
+        isOutOfStock={isOutOfStock}
+      />
+    );
   if (activeScreen === "address") return <AddressScreen addresses={addresses} selectedId={selectedAddressId} onSelect={setSelectedAddressId} onBack={() => setActiveScreen("cart")} onContinue={() => setActiveScreen("payment")} onAddAddress={() => setActiveScreen("addAddress")} onDelete={(id: string) => setAddresses(addresses.filter(a => a.id !== id))} />;
   if (activeScreen === "addAddress") return <AddAddressScreen onSave={handleSaveAddress} onCancel={() => setActiveScreen("address")} />;
   if (activeScreen === "payment") return <PaymentScreen methods={paymentMethods} selectedId={selectedPaymentId} onSelect={setSelectedPaymentId} onBack={() => setActiveScreen("address")} onContinue={() => setActiveScreen("summary")} onAddCard={() => setActiveScreen("addCard")} onDelete={(id: string) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} />;
@@ -1024,14 +1099,32 @@ const styles = StyleSheet.create({
   productImage: { width: '80%', height: '80%', resizeMode: 'contain' },
   productInfoContainer: { padding: 10, backgroundColor: '#FAFAFA' },
   productName: { fontSize: 14, color: THEME.textDark, height: 40, fontWeight: '500' },
+  productBrand: { fontSize: 12, color: THEME.textGray, marginTop: 4 },
+  outOfStockBadge: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: THEME.danger,
+    color: THEME.white,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: '700',
+    overflow: 'hidden',
+  },
   productBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   productPrice: { fontSize: 16, fontWeight: 'bold', color: THEME.primary },
   addButton: { backgroundColor: THEME.secondary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   addButtonText: { fontSize: 12, fontWeight: 'bold', color: THEME.textDark },
+  addButtonDisabled: { backgroundColor: THEME.borderColor },
+  addButtonTextDisabled: { color: THEME.textGray },
   counterContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.white, borderRadius: 6, borderWidth: 1, borderColor: THEME.borderColor },
   counterBtn: { paddingHorizontal: 8, paddingVertical: 2 },
   counterBtnText: { fontSize: 16, fontWeight: 'bold', color: THEME.primary },
+  counterBtnDisabled: { backgroundColor: THEME.borderColor },
+  counterBtnTextDisabled: { color: THEME.textGray },
   counterValue: { paddingHorizontal: 4, fontWeight: '600', fontSize: 14 },
+  productCardDisabled: { opacity: 0.5 },
 
   // Sepet Ekranı
   emptyStateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 },
@@ -1049,6 +1142,8 @@ const styles = StyleSheet.create({
   quantityControlSmall: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 8 },
   qtyBtnSmall: { padding: 6, width: 30, alignItems: 'center' },
   qtyBtnTextSmall: { fontSize: 16, fontWeight: 'bold', color: THEME.textDark },
+  qtyBtnSmallDisabled: { opacity: 0.5 },
+  qtyBtnTextSmallDisabled: { color: THEME.textGray },
   qtyTextSmall: { fontSize: 14, fontWeight: 'bold', width: 20, textAlign: 'center' },
 
   // Footer Alanları

@@ -8,7 +8,12 @@ export type Product = {
   id: string;
   name: string;
   price: number;
-  categoryId: string;
+  brand?: string;
+  barcode?: string;
+  stock: number;
+  inStock: boolean;
+  isCampaign?: boolean;
+  categoryId?: string;
   image?: string;
   description?: string;
   category?: string;
