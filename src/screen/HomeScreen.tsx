@@ -23,7 +23,9 @@ export const HomeScreen: React.FC<Props> = ({
   onAdd,
   onRemove,
 }) => {
-  const promotionalProducts = products.filter((product) => product.categoryId === promoCategoryId);
+  const promotionalProducts = products.filter(
+    (product) => product.isCampaign && product.inStock && product.stock > 0
+  );
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>

@@ -189,6 +189,11 @@ export const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 6,
   },
+  productBrand: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 6,
+  },
   productPrice: {
     fontSize: 16,
     fontWeight: "bold",
@@ -201,6 +206,21 @@ export const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     elevation: 2,
+  },
+  productCardDisabled: {
+    opacity: 0.5,
+  },
+  outOfStockBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#ef4444",
+    color: "#fff",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 6,
+    overflow: "hidden",
   },
   
   productImage: {
@@ -235,6 +255,14 @@ export const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  addButtonDisabled: {
+    width: 96,
+    backgroundColor: "#e5e7eb",
+  },
+  addButtonTextDisabled: {
+    color: "#6b7280",
+    fontSize: 12,
+  },
   counter: {
     flexDirection: "row",
     alignItems: "center",
@@ -253,6 +281,12 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#000080",
+  },
+  counterButtonDisabled: {
+    opacity: 0.5,
+  },
+  counterTextDisabled: {
+    color: "#6b7280",
   },
   
   counterValue: {

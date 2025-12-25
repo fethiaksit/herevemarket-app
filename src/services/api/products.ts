@@ -5,6 +5,10 @@ type RawProduct = {
   id?: string;
   name?: string;
   price?: number | string;
+  brand?: string;
+  barcode?: string;
+  stock?: number | string;
+  inStock?: boolean;
   image?: string;
   imageUrl?: string;
   category?: string | string[];
@@ -16,6 +20,10 @@ type RawProduct = {
 export type ProductInput = {
   name: string;
   price: number;
+  brand?: string;
+  barcode?: string;
+  stock?: number;
+  inStock?: boolean;
   image?: string;
   category?: string[];
   isCampaign?: boolean;
@@ -25,6 +33,10 @@ export type ProductDto = {
   id: string;
   name: string;
   price: number;
+  brand?: string;
+  barcode?: string;
+  stock: number;
+  inStock: boolean;
   image?: string;
   imageUrl?: string;
   category: string[];
@@ -69,19 +81,29 @@ export async function getProducts() {
 
   // console.log("[getProducts] API raw data", response);
   const mapped = rawData
-    .map((item) => ({
-      id: String(item.id ?? item._id ?? item.clientId ?? ""),
-      name: item.name ?? "Adsız Ürün",
-      price: Number(item.price) || 0,
-      image: item.image ?? item.imageUrl,
-      category: Array.isArray(item.category)
-        ? item.category
-        : item.category
-        ? [item.category]
-        : [],
-      isCampaign: Boolean(item.isCampaign),
-      isDiscounted: Boolean(item.isDiscounted),
-    }))
+    .map((item) => {
+      const stock = Number(item.stock ?? 0);
+      const inStock =
+        typeof item.inStock === "boolean" ? item.inStock : stock > 0;
+
+      return {
+        id: String(item.id ?? item._id ?? item.clientId ?? ""),
+        name: item.name ?? "Adsız Ürün",
+        price: Number(item.price) || 0,
+        brand: item.brand,
+        barcode: item.barcode,
+        stock,
+        inStock,
+        image: item.image ?? item.imageUrl,
+        category: Array.isArray(item.category)
+          ? item.category
+          : item.category
+          ? [item.category]
+          : [],
+        isCampaign: Boolean(item.isCampaign),
+        isDiscounted: Boolean(item.isDiscounted),
+      };
+    })
     .filter((item) => item.id);
 
   // console.log("[getProducts] mapped products", mapped);

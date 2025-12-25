@@ -8,7 +8,14 @@ export const categories = [
   { id: "atistirmalik", name: "Atıştırmalık" }
 ];
 
-export const products: Product[] = [
+export const products: Product[] = baseProducts.map((product) => ({
+  ...product,
+  isCampaign: product.isCampaign ?? product.categoryId === "promo",
+  stock: product.stock ?? 10,
+  inStock: product.inStock ?? true,
+}));
+
+const baseProducts: Array<Omit<Product, "stock" | "inStock"> & Partial<Pick<Product, "stock" | "inStock">>> = [
   {
     id: "p1",
     name: "İndirimli Elma",

@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import {
   RouteProp,
@@ -38,6 +39,14 @@ export default function CategoryProductsScreen() {
     );
   }, [categoryTargets, products]);
 
+  const handleIncrease = (product: ProductDto) => {
+    if (!product.inStock || product.stock === 0) {
+      Alert.alert("Bu ürün stokta bulunmuyor");
+      return;
+    }
+    increase(product.id);
+  };
+
   return (
     <View style={styles.page}>
       <View style={styles.topSection}>
@@ -67,9 +76,13 @@ export default function CategoryProductsScreen() {
 
           {filteredProducts.map((urun: ProductDto) => {
             const quantity = getQuantity(urun.id);
+            const outOfStock = !urun.inStock || urun.stock === 0;
 
             return (
-              <View key={urun.id} style={styles.productCard}>
+              <View
+                key={urun.id}
+                style={[styles.productCard, outOfStock && styles.productCardDisabled]}
+              >
                 <Image
                   source={urun.image ? { uri: urun.image } : placeholderImage}
                   style={styles.productImage}
@@ -79,6 +92,8 @@ export default function CategoryProductsScreen() {
                   <Text style={styles.productName} numberOfLines={2}>
                     {urun.name}
                   </Text>
+                  {urun.brand ? <Text style={styles.productBrand}>{urun.brand}</Text> : null}
+                  {outOfStock ? <Text style={styles.outOfStockBadge}>TÜKENDİ</Text> : null}
 
                   <View style={styles.productFooter}>
                     <Text style={styles.productPrice}>
@@ -87,10 +102,21 @@ export default function CategoryProductsScreen() {
 
                     {quantity === 0 ? (
                       <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => increase(urun.id)}
+                        style={[
+                          styles.addButton,
+                          outOfStock && styles.addButtonDisabled,
+                        ]}
+                        onPress={() => handleIncrease(urun)}
+                        disabled={outOfStock}
                       >
-                        <Text style={styles.addButtonText}>Sepete Ekle</Text>
+                        <Text
+                          style={[
+                            styles.addButtonText,
+                            outOfStock && styles.addButtonTextDisabled,
+                          ]}
+                        >
+                          {outOfStock ? "Stokta Yok" : "Sepete Ekle"}
+                        </Text>
                       </TouchableOpacity>
                     ) : (
                       <View style={styles.counter}>
@@ -102,10 +128,21 @@ export default function CategoryProductsScreen() {
                         </TouchableOpacity>
                         <Text style={styles.counterValue}>{quantity}</Text>
                         <TouchableOpacity
-                          onPress={() => increase(urun.id)}
-                          style={styles.counterButton}
+                          onPress={() => handleIncrease(urun)}
+                          style={[
+                            styles.counterButton,
+                            outOfStock && styles.counterButtonDisabled,
+                          ]}
+                          disabled={outOfStock}
                         >
-                          <Text style={styles.counterText}>+</Text>
+                          <Text
+                            style={[
+                              styles.counterText,
+                              outOfStock && styles.counterTextDisabled,
+                            ]}
+                          >
+                            +
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     )}

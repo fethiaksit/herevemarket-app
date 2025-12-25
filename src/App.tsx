@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import { Alert, FlatList, SafeAreaView, StyleSheet, View } from "react-native";
 import { Header } from "./components/Header";
 import { Cart } from "./components/Cart";
 import { LoginModal } from "./components/LoginModal";
@@ -27,6 +27,10 @@ export default function App() {
   const handleAddToCart = (productId: string) => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
+    if (!product.inStock || product.stock === 0) {
+      Alert.alert("Bu ürün stokta bulunmuyor");
+      return;
+    }
     setCartItems((prev) => {
       const existing = prev.find((i) => i.id === productId);
       if (existing) return prev.map((i) => (i.id === productId ? { ...i, quantity: i.quantity + 1 } : i));
@@ -37,6 +41,11 @@ export default function App() {
   const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
       setCartItems((prev) => prev.filter((i) => i.id !== id));
+      return;
+    }
+    const product = products.find((p) => p.id === id);
+    if (product && (!product.inStock || product.stock === 0)) {
+      Alert.alert("Bu ürün stokta bulunmuyor");
       return;
     }
     setCartItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
