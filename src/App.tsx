@@ -8,10 +8,15 @@ import { CategorySelector } from "./components/CategorySelector";
 import { ProductList } from "./components/ProductList";
 import { PromoSlider } from "./components/PromoSlider";
 import { categories, products } from "./data";
+import { ProductDetailScreen } from "./screen/ProductDetailScreen";
 import { CartItem, Product } from "./types";
 
 const PROMO_CATEGORY_ID = "promo";
 const HOME_CATEGORY_ID = "home";
+const DETAIL_SCREEN = "productDetail";
+const HOME_SCREEN = "home";
+
+type ScreenKey = typeof DETAIL_SCREEN | typeof HOME_SCREEN;
 
 export default function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -20,6 +25,8 @@ export default function App() {
   const [isAddressOpen, setIsAddressOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(HOME_CATEGORY_ID);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const [activeScreen, setActiveScreen] = useState<ScreenKey>(HOME_SCREEN);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const listRef = useRef<FlatList<Product>>(null);
   const hasUserScrolledRef = useRef(false);
   const isTransitioningRef = useRef(false);
@@ -58,6 +65,15 @@ export default function App() {
   const selectCategory = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
   };
+
+  const handleProductPress = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setActiveScreen(DETAIL_SCREEN);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setActiveScreen(HOME_SCREEN);
+  }, []);
 
   const categoryRotation = useMemo(() => categories.map((c) => c.id), []);
 
@@ -112,37 +128,52 @@ export default function App() {
     hasUserScrolledRef.current = true;
   }, []);
 
+  const isDetailScreen = activeScreen === DETAIL_SCREEN && selectedProduct !== null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header
         cartCount={cartItems.length}
         onCartPress={() => setIsCartOpen(true)}
         onAddressPress={() => setIsAddressOpen(true)}
-        onHomePress={() => setSelectedCategoryId(HOME_CATEGORY_ID)}
+        onHomePress={() => {
+          setSelectedCategoryId(HOME_CATEGORY_ID);
+          setActiveScreen(HOME_SCREEN);
+        }}
       />
 
       <View style={styles.container}>
-        <CategorySelector
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          onSelect={selectCategory}
-          homeOptionLabel="Anasayfa"
-          homeCategoryId={HOME_CATEGORY_ID}
-        />
-
-        {isHome ? <PromoSlider /> : null}
-
-        <View style={styles.listWrapper}>
-          <ProductList
-            products={displayedProducts}
-            getQuantity={getQty}
-            onAdd={handleAddToCart}
-            onRemove={(id) => handleUpdateQuantity(id, Math.max(0, getQty(id) - 1))}
-            listRef={listRef}
-            onEndReached={handleEndReached}
-            onScrollBegin={handleScrollBegin}
+        {isDetailScreen && selectedProduct ? (
+          <ProductDetailScreen
+            product={selectedProduct}
+            onBack={handleBackToList}
           />
-        </View>
+        ) : (
+          <>
+            <CategorySelector
+              categories={categories}
+              selectedCategoryId={selectedCategoryId}
+              onSelect={selectCategory}
+              homeOptionLabel="Anasayfa"
+              homeCategoryId={HOME_CATEGORY_ID}
+            />
+
+            {isHome ? <PromoSlider /> : null}
+
+            <View style={styles.listWrapper}>
+              <ProductList
+                products={displayedProducts}
+                getQuantity={getQty}
+                onAdd={handleAddToCart}
+                onRemove={(id) => handleUpdateQuantity(id, Math.max(0, getQty(id) - 1))}
+                onProductPress={handleProductPress}
+                listRef={listRef}
+                onEndReached={handleEndReached}
+                onScrollBegin={handleScrollBegin}
+              />
+            </View>
+          </>
+        )}
       </View>
 
       <Cart

@@ -1,5 +1,5 @@
 import React, { RefObject } from "react";
-import { FlatList, StyleSheet } from "react-native";
+import { FlatList, StyleSheet, TouchableOpacity } from "react-native";
 import { Product } from "../types";
 import { ProductCard } from "./ProductCard";
 
@@ -8,6 +8,7 @@ type Props = {
   getQuantity: (id: string) => number;
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
+  onProductPress?: (product: Product) => void;
   listRef?: RefObject<FlatList<Product>>;
   onEndReached?: () => void;
   onScrollBegin?: () => void;
@@ -18,6 +19,7 @@ export const ProductList: React.FC<Props> = ({
   getQuantity,
   onAdd,
   onRemove,
+  onProductPress,
   listRef,
   onEndReached,
   onScrollBegin,
@@ -28,12 +30,18 @@ export const ProductList: React.FC<Props> = ({
       data={products}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <ProductCard
-          product={item}
-          quantity={getQuantity(item.id)}
-          onAdd={() => onAdd(item.id)}
-          onRemove={() => onRemove(item.id)}
-        />
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => onProductPress?.(item)}
+          disabled={!onProductPress}
+        >
+          <ProductCard
+            product={item}
+            quantity={getQuantity(item.id)}
+            onAdd={() => onAdd(item.id)}
+            onRemove={() => onRemove(item.id)}
+          />
+        </TouchableOpacity>
       )}
       numColumns={2}
       columnWrapperStyle={styles.row}
