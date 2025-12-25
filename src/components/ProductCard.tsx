@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { Product } from "../types";
 
 type Props = {
@@ -34,6 +34,11 @@ export const ProductCard: React.FC<Props> = ({
       <View style={styles.top}>
         <Text style={styles.title}>{product.name}</Text>
         {product.brand ? <Text style={styles.brand}>{product.brand}</Text> : null}
+        {product.description && product.description.trim().length > 0 ? (
+          <Text style={styles.descriptionPreview} numberOfLines={1} ellipsizeMode="tail">
+            {product.description}
+          </Text>
+        ) : null}
         {isOutOfStock ? <Text style={styles.stockBadge}>TÜKENDİ</Text> : null}
       </View>
       <Text style={styles.price}>{product.price.toFixed(2)} ₺</Text>
@@ -91,6 +96,7 @@ const styles = StyleSheet.create({
   top: { minHeight: 36, justifyContent: "center" },
   title: { fontSize: 16, fontWeight: "700", color: "#082A5F" },
   brand: { fontSize: 12, color: "#6b7280", marginTop: 4 },
+  descriptionPreview: { fontSize: 12, color: "#6b7280", marginTop: 4 },
   price: { fontSize: 14, color: "#333", marginVertical: 8 },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   qtyBtn: {

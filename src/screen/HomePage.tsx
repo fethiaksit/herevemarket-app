@@ -637,6 +637,11 @@ export default function HomePage() {
         <View style={styles.productInfoContainer}>
           <Text style={styles.productName} numberOfLines={2}>{urun.name}</Text>
           {urun.brand ? <Text style={styles.productBrand}>{urun.brand}</Text> : null}
+          {urun.description && urun.description.trim().length > 0 ? (
+            <Text style={styles.productDescriptionPreview} numberOfLines={1} ellipsizeMode="tail">
+              {urun.description}
+            </Text>
+          ) : null}
           {outOfStock ? <Text style={styles.outOfStockBadge}>TÜKENDİ</Text> : null}
           <View style={styles.productBottomRow}>
             <Text style={styles.productPrice}>{formatPrice(urun.price)}</Text>
@@ -811,6 +816,7 @@ const styles = StyleSheet.create({
   productInfoContainer: { padding: 10, backgroundColor: '#FAFAFA' },
   productName: { fontSize: 14, color: THEME.textDark, height: 40, fontWeight: '500' },
   productBrand: { fontSize: 12, color: THEME.textGray, marginTop: 4 },
+  productDescriptionPreview: { fontSize: 12, color: THEME.textGray, marginTop: 4 },
   outOfStockBadge: { marginTop: 8, alignSelf: 'flex-start', backgroundColor: THEME.danger, color: THEME.white, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 11, fontWeight: '700', overflow: 'hidden' },
   productBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   productPrice: { fontSize: 16, fontWeight: 'bold', color: THEME.primary },
