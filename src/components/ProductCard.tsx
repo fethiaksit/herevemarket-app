@@ -7,13 +7,30 @@ type Props = {
   quantity: number;
   onAdd: () => void;
   onRemove: () => void;
+  onPress?: () => void;
+  showActions?: boolean;
+  showImage?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
-export const ProductCard: React.FC<Props> = ({ product, quantity, onAdd, onRemove }) => {
+export const ProductCard: React.FC<Props> = ({
+  product,
+  quantity,
+  onAdd,
+  onRemove,
+  onPress,
+  showActions = true,
+  showImage = false,
+  containerStyle,
+}) => {
   const isOutOfStock = !product.inStock || product.stock === 0;
+  const cardStyles = [styles.card, isOutOfStock && styles.cardDisabled, containerStyle];
 
-  return (
-    <View style={[styles.card, isOutOfStock && styles.cardDisabled]}>
+  const content = (
+    <>
+      {showImage && product.image ? (
+        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+      ) : null}
       <View style={styles.top}>
         <Text style={styles.title}>{product.name}</Text>
         {product.brand ? <Text style={styles.brand}>{product.brand}</Text> : null}
@@ -21,25 +38,37 @@ export const ProductCard: React.FC<Props> = ({ product, quantity, onAdd, onRemov
       </View>
       <Text style={styles.price}>{product.price.toFixed(2)} ₺</Text>
 
-      <View style={styles.row}>
-        <TouchableOpacity onPress={onRemove} style={styles.qtyBtn}>
-          <Text style={styles.qtyText}>-</Text>
-        </TouchableOpacity>
+      {showActions ? (
+        <View style={styles.row}>
+          <TouchableOpacity onPress={onRemove} style={styles.qtyBtn}>
+            <Text style={styles.qtyText}>-</Text>
+          </TouchableOpacity>
 
-        <Text style={styles.qty}>{quantity}</Text>
+          <Text style={styles.qty}>{quantity}</Text>
 
-        <TouchableOpacity
-          onPress={onAdd}
-          style={[styles.qtyBtn, styles.add, isOutOfStock && styles.addDisabled]}
-          disabled={isOutOfStock}
-        >
-          <Text style={[styles.qtyText, isOutOfStock ? styles.addDisabledText : { color: "#fff" }]}>
-            {isOutOfStock ? "Stokta Yok" : "+"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <TouchableOpacity
+            onPress={onAdd}
+            style={[styles.qtyBtn, styles.add, isOutOfStock && styles.addDisabled]}
+            disabled={isOutOfStock}
+          >
+            <Text style={[styles.qtyText, isOutOfStock ? styles.addDisabledText : { color: "#fff" }]}>
+              {isOutOfStock ? "Stokta Yok" : "+"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} style={cardStyles} activeOpacity={0.85}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={cardStyles}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -51,6 +80,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 150,
     marginBottom: 10,
+  },
+  image: {
+    width: "100%",
+    height: 90,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: "#e5e7eb",
   },
   top: { minHeight: 36, justifyContent: "center" },
   title: { fontSize: 16, fontWeight: "700", color: "#082A5F" },
