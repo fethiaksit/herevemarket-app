@@ -8,3 +8,14 @@ export type RootStackParamList = {
     products: ProductDto[];
   };
 };
+
+export type AuthStackParamList = {
+  AuthLanding: undefined;
+  Login: undefined;
+  Register: undefined;
+};
+
+export type MainStackParamList = {
+  Home: undefined;
+  AddressList: undefined;
+};
