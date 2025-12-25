@@ -3,13 +3,20 @@ import { Address } from "../../types";
 
 export type AddressPayload = Omit<Address, "id">;
 
-export async function getAddresses(token: string) {
-  return apiFetch<Address[]>("/user/addresses", {
+type GetAddressesResponse = {
+  addresses: Address[];
+};
+
+export async function getAddresses(token: string): Promise<Address[]> {
+  const res = await apiFetch<GetAddressesResponse>("/user/addresses", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  return Array.isArray(res.addresses) ? res.addresses : [];
 }
+
 
 export async function createAddress(token: string, payload: AddressPayload) {
   return apiFetch<Address>("/user/addresses", {

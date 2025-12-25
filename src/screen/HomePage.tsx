@@ -83,6 +83,9 @@ const LEGAL_URLS = {
   distance: "https://herevemarket.com/mesafeli-satis",
 } as const;
 
+// Typescript hatası için key tipi tanımlaması
+type LegalUrlKey = keyof typeof LEGAL_URLS;
+
 const markalar: Brand[] = [
   { name: "Eti", image: require("../../assets/eti.png") },
   { name: "Ülker", image: require("../../assets/ulker.png") },
@@ -170,7 +173,6 @@ const buildOrderPayload = (
 
 // --- COMPONENTS ---
 
-// *** RESTORED CART SCREEN ***
 function CartScreen({
   cartDetails,
   total,
@@ -248,7 +250,12 @@ function CartScreen({
                       onPress={() => onIncrease(item.product.id)}
                       disabled={isOutOfStock(item.product)}
                     >
-                      <Text style={[styles.qtyBtnTextSmall, isOutOfStock(item.product) && styles.qtyBtnTextSmallDisabled]}>
+                      <Text
+                        style={[
+                          styles.qtyBtnTextSmall,
+                          isOutOfStock(item.product) && styles.qtyBtnTextSmallDisabled,
+                        ]}
+                      >
                         +
                       </Text>
                     </TouchableOpacity>
@@ -289,9 +296,7 @@ function CartScreen({
   );
 }
 
-// Diğer yardımcı ekranlar (Address, Payment vb.) değişmedi, aşağıda yer tutucu olarak değil, 
-// çalışması için tam kod olarak verilmiştir.
-
+// *** DÜZELTME BURADA YAPILDI (safeAddresses.map kullanıldı) ***
 function AddressScreen({
   addresses,
   selectedId,
@@ -305,6 +310,9 @@ function AddressScreen({
   showManageButton,
   loading,
 }: any) {
+  // Eğer addresses undefined gelirse boş diziye çevir
+  const safeAddresses = Array.isArray(addresses) ? addresses : [];
+
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
@@ -320,8 +328,10 @@ function AddressScreen({
           </TouchableOpacity>
         ) : null}
         <Text style={styles.sectionHeader}>Kayıtlı Adreslerim</Text>
-        {!addresses.length && !loading ? <Text style={styles.emptyText}>Kayıtlı adres bulunamadı.</Text> : null}
-        {addresses.map((address: Address) => {
+        {!safeAddresses.length && !loading ? <Text style={styles.emptyText}>Kayıtlı adres bulunamadı.</Text> : null}
+        
+        {/* HATA DÜZELTİLDİ: addresses.map yerine safeAddresses.map kullanıldı */}
+        {safeAddresses.map((address: Address) => {
           const isSelected = selectedId === address.id;
           return (
             <TouchableOpacity key={address.id} style={[styles.selectionCard, isSelected && styles.selectionCardActive]} onPress={() => onSelect(address.id)}>
@@ -603,8 +613,10 @@ export default function HomePage() {
     setAddressesLoading(true);
     try {
       const data = await getAddresses(token);
-      setAddresses(data);
-      const defaultAddress = data.find((address) => address.isDefault) ?? data[0];
+      // Ensure data is an array
+      const safeData = Array.isArray(data) ? data : [];
+      setAddresses(safeData);
+      const defaultAddress = safeData.find((address) => address.isDefault) ?? safeData[0];
       setSelectedAddressId(defaultAddress?.id ?? "");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Adresler alınamadı.";
@@ -947,7 +959,7 @@ export default function HomePage() {
         payment={paymentMethods.find(p => p.id === selectedPaymentId)}
         onBack={() => setActiveScreen("payment")}
         onSubmit={handleSubmitOrder}
-        onPressLegal={(key: any) => Linking.openURL(LEGAL_URLS[key])}
+        onPressLegal={(key: LegalUrlKey) => Linking.openURL(LEGAL_URLS[key])}
       />
     );
   }
@@ -1071,6 +1083,7 @@ const styles = StyleSheet.create({
   brandImg: { width: 40, height: 40 },
   productsSection: { padding: 16 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: THEME.textDark, marginBottom: 16 },
+  sectionHeader: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark, marginBottom: 12 },
   gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   noProductText: { textAlign: 'center', color: THEME.textGray, marginTop: 20 },
   emptyText: { textAlign: 'center', color: THEME.textGray, marginBottom: 12 },
@@ -1121,6 +1134,7 @@ const styles = StyleSheet.create({
   footerTotalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   footerTotalLabel: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark },
   footerTotalValue: { fontSize: 18, fontWeight: 'bold', color: THEME.primary },
+  summaryTotalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   primaryButton: { backgroundColor: THEME.secondary, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   primaryButtonText: { color: THEME.textDark, fontSize: 16, fontWeight: 'bold' },
   secondaryButton: { backgroundColor: THEME.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12 },
