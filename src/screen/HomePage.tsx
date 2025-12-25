@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   ScrollView,
@@ -16,6 +17,7 @@ import {
   StatusBar,
   SafeAreaView,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 // --- IMPORT ---
 import { ProductDetailScreen } from "./ProductDetailScreen"; 
@@ -25,6 +27,10 @@ import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../utils/cartPrice"; 
 import { getProducts, ProductDto } from "../services/api/products"; 
 import { getCategories, CategoryDto } from "../services/api/categories"; 
+import { createAddress, deleteAddress, getAddresses, updateAddress } from "../services/api/addresses";
+import { submitOrder } from "../services/api/orders";
+import { useAuth } from "../context/AuthContext";
+import { Address, OrderPayload } from "../types";
 
 // Renk Paleti
 const THEME = {
@@ -44,21 +50,12 @@ const THEME = {
 
 type Brand = { name: string; image: ImageSourcePropType };
 type Product = ProductDto & { categoryIds?: string[] };
-type Address = { id: string; title: string; detail: string; note?: string };
 type PaymentMethod = { id: string; label: string; description: string };
 type OrderItemPayload = {
   productId: string;
   name: string;
   price: number;
   quantity: number;
-};
-
-export type OrderPayload = {
-  items: OrderItemPayload[];
-  totalPrice: number;
-  customer: { title: string; detail: string; note?: string };
-  paymentMethod: { id: string; label?: string };
-  createdAt: string;
 };
 
 type Screen =
@@ -295,7 +292,19 @@ function CartScreen({
 // Diğer yardımcı ekranlar (Address, Payment vb.) değişmedi, aşağıda yer tutucu olarak değil, 
 // çalışması için tam kod olarak verilmiştir.
 
-function AddressScreen({ addresses, selectedId, onSelect, onBack, onContinue, onAddAddress, onDelete }: any) {
+function AddressScreen({
+  addresses,
+  selectedId,
+  onSelect,
+  onBack,
+  onContinue,
+  onAddAddress,
+  onDelete,
+  onSetDefault,
+  onManageAddresses,
+  showManageButton,
+  loading,
+}: any) {
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
@@ -304,7 +313,14 @@ function AddressScreen({ addresses, selectedId, onSelect, onBack, onContinue, on
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {loading ? <ActivityIndicator style={{ marginBottom: 12 }} /> : null}
+        {showManageButton ? (
+          <TouchableOpacity style={styles.secondaryButton} onPress={onManageAddresses}>
+            <Text style={styles.secondaryButtonText}>Adreslerimi Yönet</Text>
+          </TouchableOpacity>
+        ) : null}
         <Text style={styles.sectionHeader}>Kayıtlı Adreslerim</Text>
+        {!addresses.length && !loading ? <Text style={styles.emptyText}>Kayıtlı adres bulunamadı.</Text> : null}
         {addresses.map((address: Address) => {
           const isSelected = selectedId === address.id;
           return (
@@ -313,8 +329,12 @@ function AddressScreen({ addresses, selectedId, onSelect, onBack, onContinue, on
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
                   <Text style={styles.radioIcon}>{isSelected ? "◉" : "○"}</Text>
                   <Text style={styles.selectionTitle}>{address.title}</Text>
+                  {address.isDefault ? <Text style={styles.defaultBadge}>Varsayılan</Text> : null}
                 </View>
-                <TouchableOpacity onPress={() => onDelete(address.id)}><Text style={styles.deleteText}>Sil</Text></TouchableOpacity>
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <TouchableOpacity onPress={() => onSetDefault(address)}><Text style={styles.linkText}>Varsayılan Yap</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => onDelete(address.id)}><Text style={styles.deleteText}>Sil</Text></TouchableOpacity>
+                </View>
               </View>
               <Text style={styles.selectionDetail}>{address.detail}</Text>
             </TouchableOpacity>
@@ -324,6 +344,52 @@ function AddressScreen({ addresses, selectedId, onSelect, onBack, onContinue, on
       </ScrollView>
       <View style={styles.footerSimple}>
         <TouchableOpacity style={styles.primaryButton} onPress={onContinue}><Text style={styles.primaryButtonText}>Devam Et</Text></TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function GuestAddressScreen({ address, onChange, onBack, onContinue }: any) {
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.headerBackButton} onPress={onBack}>
+          <Text style={styles.headerBackText}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerCenterAbsolute}>
+          <Text style={styles.headerTitle}>Teslimat Adresi</Text>
+        </View>
+        <View style={{ width: 40 }} />
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.sectionHeader}>Adres Gir</Text>
+        <Text style={styles.inputLabel}>Adres Başlığı</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Örn: Evim"
+          value={address.title}
+          onChangeText={(value) => onChange({ ...address, title: value })}
+        />
+        <Text style={styles.inputLabel}>Adres Detayı</Text>
+        <TextInput
+          style={[styles.input, { height: 80 }]}
+          multiline
+          placeholder="Mahalle, Cadde, Sokak..."
+          value={address.detail}
+          onChangeText={(value) => onChange({ ...address, detail: value })}
+        />
+        <Text style={styles.inputLabel}>Not (Opsiyonel)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Zile basmayınız vb."
+          value={address.note}
+          onChangeText={(value) => onChange({ ...address, note: value })}
+        />
+      </ScrollView>
+      <View style={styles.footerSimple}>
+        <TouchableOpacity style={styles.primaryButton} onPress={onContinue}>
+          <Text style={styles.primaryButtonText}>Devam Et</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -488,6 +554,8 @@ function SuccessScreen({ orderId, onReturnHome }: { orderId: string; onReturnHom
 // --- MAIN HOMEPAGE COMPONENT ---
 
 export default function HomePage() {
+  const navigation = useNavigation<any>();
+  const { token, isGuest, logout } = useAuth();
   const { cart, increase, decrease, getQuantity, clearCart } = useCart();
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
   const [products, setProducts] = useState<Product[]>([]);
@@ -504,6 +572,8 @@ export default function HomePage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string>(initialAddresses[0]?.id ?? "");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>(initialPaymentMethods[0]?.id ?? "");
   const [orderId, setOrderId] = useState<string>("");
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [guestAddress, setGuestAddress] = useState({ title: "", detail: "", note: "" });
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [activeDealIndex, setActiveDealIndex] = useState(0);
@@ -523,6 +593,39 @@ export default function HomePage() {
       finally { setLoading(false); }
     })();
   }, []);
+
+  const loadAddresses = useCallback(async () => {
+    if (!token) {
+      setAddresses([]);
+      setSelectedAddressId("");
+      return;
+    }
+    setAddressesLoading(true);
+    try {
+      const data = await getAddresses(token);
+      setAddresses(data);
+      const defaultAddress = data.find((address) => address.isDefault) ?? data[0];
+      setSelectedAddressId(defaultAddress?.id ?? "");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Adresler alınamadı.";
+      Alert.alert("Adresler", message);
+    } finally {
+      setAddressesLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && activeScreen === "address") {
+      loadAddresses();
+    }
+  }, [activeScreen, loadAddresses, token]);
+
+  useEffect(() => {
+    if (isGuest) {
+      setAddresses([]);
+      setSelectedAddressId("");
+    }
+  }, [isGuest]);
 
   useEffect(() => {
     (async () => {
@@ -674,15 +777,109 @@ export default function HomePage() {
 
   // Navigasyonlar
   const handleCheckout = () => { if (!cartDetails.length) return Alert.alert("Sepet Boş"); setActiveScreen("address"); };
-  const handleSaveAddress = (data: any) => { setAddresses([...addresses, { ...data, id: Date.now().toString() }]); setSelectedAddressId(Date.now().toString()); setActiveScreen("address"); };
+  const handleSaveAddress = async (data: any) => {
+    if (!token) return;
+    try {
+      const created = await createAddress(token, { ...data, isDefault: addresses.length === 0 });
+      setAddresses((prev) => [...prev, created]);
+      setSelectedAddressId(created.id);
+      setActiveScreen("address");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Adres kaydedilemedi.";
+      Alert.alert("Adres", message);
+    }
+  };
   const handleSaveCard = (data: any) => { setPaymentMethods([...paymentMethods, { id: Date.now().toString(), label: data.holder, description: `**** ${data.number.slice(-4)}` }]); setSelectedPaymentId(Date.now().toString()); setActiveScreen("payment"); };
+  const handleDeleteAddress = (id: string) => {
+    if (!token) return;
+    Alert.alert("Adres Sil", "Adresi silmek istediğinize emin misiniz?", [
+      { text: "Vazgeç", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteAddress(token, id);
+            setAddresses((prev) => prev.filter((address) => address.id !== id));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Adres silinemedi.";
+            Alert.alert("Adres", message);
+          }
+        },
+      },
+    ]);
+  };
+  const handleSetDefaultAddress = async (address: Address) => {
+    if (!token) return;
+    try {
+      const currentDefault = addresses.find((item) => item.isDefault);
+      if (currentDefault && currentDefault.id !== address.id) {
+        await updateAddress(token, currentDefault.id, {
+          title: currentDefault.title,
+          detail: currentDefault.detail,
+          note: currentDefault.note,
+          isDefault: false,
+        });
+      }
+      const updated = await updateAddress(token, address.id, {
+        title: address.title,
+        detail: address.detail,
+        note: address.note,
+        isDefault: true,
+      });
+      setAddresses((prev) =>
+        prev.map((item) =>
+          item.id === updated.id
+            ? updated
+            : { ...item, isDefault: item.id === currentDefault?.id ? false : item.isDefault }
+        )
+      );
+      setSelectedAddressId(updated.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Varsayılan adres ayarlanamadı.";
+      Alert.alert("Adres", message);
+    }
+  };
   const handleSubmitOrder = async () => {
     if(!cartDetails.length) return Alert.alert("Sepet Boş");
-    const payload = buildOrderPayload(cartDetails, cartTotal, addresses.find(a=>a.id===selectedAddressId)!, paymentMethods.find(p=>p.id===selectedPaymentId)!);
-    console.log(payload);
-    setOrderId(Math.floor(100000 + Math.random() * 900000).toString());
-    clearCart();
-    setActiveScreen("success");
+    if (isGuest) {
+      if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
+        Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
+        return;
+      }
+    } else if (!selectedAddressId) {
+      Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
+      return;
+    }
+    const selectedAddress = isGuest
+      ? { id: "guest", ...guestAddress }
+      : addresses.find(a=>a.id===selectedAddressId);
+    if (!selectedAddress) {
+      Alert.alert("Adres Gerekli", "Lütfen teslimat adresi seçin.");
+      return;
+    }
+    const payload = buildOrderPayload(cartDetails, cartTotal, selectedAddress, paymentMethods.find(p=>p.id===selectedPaymentId)!);
+    try {
+      const response = await submitOrder(payload, token);
+      setOrderId(response?.id ?? Math.floor(100000 + Math.random() * 900000).toString());
+      clearCart();
+      setActiveScreen("success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sipariş gönderilemedi.";
+      Alert.alert("Sipariş", message);
+    }
+  };
+
+  const handleAccountPress = () => {
+    if (!token) {
+      logout();
+      return;
+    }
+    Alert.alert("Hesabım", undefined, [
+      { text: "Adreslerim", onPress: () => navigation.navigate("AddressList") },
+      { text: "Çıkış Yap", style: "destructive", onPress: () => logout() },
+      { text: "Vazgeç", style: "cancel" },
+    ]);
   };
 
   // --- RENDER ---
@@ -702,11 +899,58 @@ export default function HomePage() {
   }
 
   if (activeScreen === "cart") return <CartScreen cartDetails={cartDetails} total={cartTotal} onBack={() => setActiveScreen("home")} onCheckout={handleCheckout} onIncrease={handleIncrease} onDecrease={decrease} isOutOfStock={isOutOfStock} />;
-  if (activeScreen === "address") return <AddressScreen addresses={addresses} selectedId={selectedAddressId} onSelect={setSelectedAddressId} onBack={() => setActiveScreen("cart")} onContinue={() => setActiveScreen("payment")} onAddAddress={() => setActiveScreen("addAddress")} onDelete={(id: string) => setAddresses(addresses.filter(a => a.id !== id))} />;
+  if (activeScreen === "address") {
+    if (isGuest) {
+      return (
+        <GuestAddressScreen
+          address={guestAddress}
+          onChange={setGuestAddress}
+          onBack={() => setActiveScreen("cart")}
+          onContinue={() => {
+            if (!guestAddress.title.trim() || !guestAddress.detail.trim()) {
+              Alert.alert("Adres Gerekli", "Lütfen teslimat adresini girin.");
+              return;
+            }
+            setActiveScreen("payment");
+          }}
+        />
+      );
+    }
+    return (
+      <AddressScreen
+        addresses={addresses}
+        selectedId={selectedAddressId}
+        onSelect={setSelectedAddressId}
+        onBack={() => setActiveScreen("cart")}
+        onContinue={() => setActiveScreen("payment")}
+        onAddAddress={() => setActiveScreen("addAddress")}
+        onDelete={handleDeleteAddress}
+        onSetDefault={handleSetDefaultAddress}
+        onManageAddresses={() => navigation.navigate("AddressList")}
+        showManageButton
+        loading={addressesLoading}
+      />
+    );
+  }
   if (activeScreen === "addAddress") return <AddAddressScreen onSave={handleSaveAddress} onCancel={() => setActiveScreen("address")} />;
   if (activeScreen === "payment") return <PaymentScreen methods={paymentMethods} selectedId={selectedPaymentId} onSelect={setSelectedPaymentId} onBack={() => setActiveScreen("address")} onContinue={() => setActiveScreen("summary")} onAddCard={() => setActiveScreen("addCard")} onDelete={(id: string) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} />;
   if (activeScreen === "addCard") return <AddCardScreen onSave={handleSaveCard} onCancel={() => setActiveScreen("payment")} />;
-  if (activeScreen === "summary") return <SummaryScreen cartDetails={cartDetails} total={cartTotal} address={addresses.find(a => a.id === selectedAddressId)} payment={paymentMethods.find(p => p.id === selectedPaymentId)} onBack={() => setActiveScreen("payment")} onSubmit={handleSubmitOrder} onPressLegal={(key: any) => Linking.openURL(LEGAL_URLS[key])} />;
+  if (activeScreen === "summary") {
+    const summaryAddress = isGuest
+      ? { id: "guest", ...guestAddress }
+      : addresses.find(a => a.id === selectedAddressId);
+    return (
+      <SummaryScreen
+        cartDetails={cartDetails}
+        total={cartTotal}
+        address={summaryAddress}
+        payment={paymentMethods.find(p => p.id === selectedPaymentId)}
+        onBack={() => setActiveScreen("payment")}
+        onSubmit={handleSubmitOrder}
+        onPressLegal={(key: any) => Linking.openURL(LEGAL_URLS[key])}
+      />
+    );
+  }
   if (activeScreen === "success") return <SuccessScreen orderId={orderId} onReturnHome={() => setActiveScreen("home")} />;
 
   const isCategoryScreen = activeScreen === "category";
@@ -726,6 +970,22 @@ export default function HomePage() {
                  <View style={styles.headerLogoContainer}>
                     <Image source={require("../../assets/herevemarket2.png")} style={styles.headerLogo} resizeMode="contain" />
                  </View>
+             </View>
+             <View style={styles.accountRow}>
+                {!isGuest && token ? (
+                  <>
+                    <TouchableOpacity style={styles.accountButton} onPress={() => navigation.navigate("AddressList")}>
+                      <Text style={styles.accountButtonText}>Adreslerim</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress}>
+                      <Text style={styles.accountButtonText}>Hesabım</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress}>
+                    <Text style={styles.accountButtonText}>Giriş Yap</Text>
+                  </TouchableOpacity>
+                )}
              </View>
              <View style={styles.categoryContainer}>
                 <ScrollView ref={categoryListRef} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, paddingVertical: 10}}>
@@ -785,6 +1045,9 @@ const styles = StyleSheet.create({
   logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 60, position: 'relative' },
   headerLogoContainer: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   headerLogo: { width: 220, height: 60 }, 
+  accountRow: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 16, gap: 10, marginBottom: 6 },
+  accountButton: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  accountButtonText: { color: THEME.white, fontWeight: "600", fontSize: 12 },
   headerBar: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: THEME.white, borderBottomWidth: 1, borderColor: THEME.borderColor },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: THEME.textDark },
   headerCenterAbsolute: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 },
@@ -810,6 +1073,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: THEME.textDark, marginBottom: 16 },
   gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   noProductText: { textAlign: 'center', color: THEME.textGray, marginTop: 20 },
+  emptyText: { textAlign: 'center', color: THEME.textGray, marginBottom: 12 },
   productCard: { width: (Dimensions.get("window").width - 48) / 2, backgroundColor: THEME.white, borderRadius: 12, marginBottom: 16, elevation: 3, shadowColor: "#000", shadowOpacity: 0.1, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, overflow: 'hidden' },
   productImageContainer: { height: 140, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 10 },
   productImage: { width: '80%', height: '80%', resizeMode: 'contain' },
@@ -870,6 +1134,8 @@ const styles = StyleSheet.create({
   selectionCard: { backgroundColor: THEME.white, padding: 16, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: THEME.borderColor },
   selectionCardActive: { borderColor: THEME.secondary, backgroundColor: '#FFFDF5', borderWidth: 2 },
   selectionHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  defaultBadge: { marginLeft: 8, color: THEME.success, fontWeight: "700", fontSize: 12 },
+  linkText: { color: THEME.primary, fontWeight: "600" },
   radioIcon: { fontSize: 18, color: THEME.secondary, marginRight: 8 },
   selectionTitle: { fontWeight: 'bold', color: THEME.textDark },
   selectionDetail: { color: THEME.textGray, fontSize: 13, marginLeft: 24 },

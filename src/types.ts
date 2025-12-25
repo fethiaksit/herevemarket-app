@@ -20,3 +20,32 @@ export type Product = {
 };
 
 export type CartItem = Product & { quantity: number };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type Address = {
+  id: string;
+  title: string;
+  detail: string;
+  note?: string;
+  isDefault?: boolean;
+};
+
+export type OrderItemPayload = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type OrderPayload = {
+  items: OrderItemPayload[];
+  totalPrice: number;
+  customer: { title: string; detail: string; note?: string };
+  paymentMethod: { id: string; label?: string };
+  createdAt: string;
+};
