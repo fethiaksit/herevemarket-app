@@ -8,7 +8,7 @@ import { CategorySelector } from "./components/CategorySelector";
 import { ProductList } from "./components/ProductList";
 import { PromoSlider } from "./components/PromoSlider";
 import { categories, products } from "./data";
-import { ProductDetailScreen } from "./screen/ProductDetailScreen";
+import { ProductDetailScreen } from "./screens/ProductDetailScreen";
 import { CartItem, Product } from "./types";
 
 const PROMO_CATEGORY_ID = "promo";
