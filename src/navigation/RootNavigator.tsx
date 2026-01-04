@@ -2,7 +2,7 @@ import React from "react";
 import { ActivityIndicator, SafeAreaView, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomePage from "../screen/HomePage";
+import HomePage from "../screens/HomePage";
 import AuthLandingScreen from "../screen/AuthLandingScreen";
 import LoginScreen from "../screen/LoginScreen";
 import RegisterScreen from "../screen/RegisterScreen";
