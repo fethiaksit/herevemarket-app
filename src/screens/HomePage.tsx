@@ -105,6 +105,8 @@ export default function HomePage() {
   const [activeDealIndex, setActiveDealIndex] = useState(0);
   const sliderRef = useRef<ScrollView | null>(null);
   const categoryListRef = useRef<ScrollView | null>(null);
+  const productListRef = useRef<ScrollView | null>(null);
+  const productListOffset = useRef(0);
   const { width } = Dimensions.get("window");
   const slideWidth = width - 32;
 
@@ -193,28 +195,44 @@ export default function HomePage() {
       return productCategoryIds.includes(selectedCategoryId) || (selectedCategory && productCategoryIds.includes(selectedCategory.name));
     });
   }, [products, selectedCategoryId, selectedCategory, campaignProducts]);
+
+  const isCategoryScreen = activeScreen === "category";
   
   // Swipe
-  const swipeResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-      onPanResponderEnd: (e, gestureState) => {
-        const { dx } = gestureState;
-        if (Math.abs(dx) > 50) { 
-           const currentIndex = categories.findIndex(c => c.id === selectedCategoryId);
-           if (dx > 0 && currentIndex > 0) {
-               const prevCat = categories[currentIndex - 1];
-               setSelectedCategoryId(prevCat.id);
-               categoryListRef.current?.scrollTo({ x: (currentIndex - 1) * 100, animated: true });
-           } else if (dx < 0 && currentIndex < categories.length - 1) {
-               const nextCat = categories[currentIndex + 1];
-               setSelectedCategoryId(nextCat.id);
-               categoryListRef.current?.scrollTo({ x: (currentIndex + 1) * 100, animated: true });
-           }
-        }
-      }
-    })
-  ).current;
+  const swipeResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+        onPanResponderEnd: (_, gestureState) => {
+          const { dx } = gestureState;
+          if (Math.abs(dx) > 50) {
+            const currentIndex = categories.findIndex((c) => c.id === selectedCategoryId);
+            if (currentIndex < 0) return;
+            if (dx > 0 && currentIndex > 0) {
+              const prevCat = categories[currentIndex - 1];
+              setSelectedCategoryId(prevCat.id);
+              if (!isCategoryScreen) setActiveScreen("category");
+              categoryListRef.current?.scrollTo({ x: (currentIndex - 1) * 100, animated: true });
+            } else if (dx < 0 && currentIndex < categories.length - 1) {
+              const nextCat = categories[currentIndex + 1];
+              setSelectedCategoryId(nextCat.id);
+              if (!isCategoryScreen) setActiveScreen("category");
+              categoryListRef.current?.scrollTo({ x: (currentIndex + 1) * 100, animated: true });
+            }
+          }
+        },
+      }),
+    [categories, selectedCategoryId, isCategoryScreen, setActiveScreen, setSelectedCategoryId]
+  );
+
+  useEffect(() => {
+    if (activeScreen === "home" || activeScreen === "category") {
+      requestAnimationFrame(() => {
+        productListRef.current?.scrollTo({ y: productListOffset.current, animated: false });
+      });
+    }
+  }, [activeScreen]);
 
   // Sepet
   const cartDetails = useMemo(() => 
@@ -481,7 +499,6 @@ export default function HomePage() {
   }
   if (activeScreen === "success") return <SuccessScreen orderId={orderId} onReturnHome={() => setActiveScreen("home")} />;
 
-  const isCategoryScreen = activeScreen === "category";
   const displayProducts = isCategoryScreen ? selectedCategoryProducts : campaignProducts;
   const pageTitle = isCategoryScreen ? (selectedCategory?.name || "Ürünler") : "Kampanyalı Fırsatlar";
 
@@ -501,7 +518,14 @@ export default function HomePage() {
           categoryListRef={categoryListRef}
         />
         <View style={styles.contentArea} {...swipeResponder.panHandlers}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView
+              ref={productListRef}
+              contentContainerStyle={{ paddingBottom: 100 }}
+              onScroll={(event) => {
+                productListOffset.current = event.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={16}
+            >
                 {!isCategoryScreen && (
                     <View style={styles.sliderSection}>
                         <HomeSlider

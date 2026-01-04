@@ -52,7 +52,7 @@ export default function HomeHeader({
               </>
             ) : (
               <TouchableOpacity style={styles.accountButton} onPress={handleAccountPress}>
-                <Text style={styles.accountButtonText}>Giriş Yap</Text>
+                <Text style={styles.accountButtonText}>👤 Giriş Yap</Text>
               </TouchableOpacity>
             )}
          </View>
